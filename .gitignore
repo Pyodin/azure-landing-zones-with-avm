@@ -1,0 +1,16 @@
+.terraform/
+.terraform.tfstate.lock.info
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+.probe/
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.DS_Store
+
+# Written by the bootstrap root: names a storage account specific to one tenant.
+backend.hcl
