@@ -20,7 +20,9 @@ locals {
     "application/workload-aks",
   ]
 
-  github_repository = "Pyodin/azure-landing-zones-with-avm"
+  # Immutable subject form. Since July 2026 GitHub puts the owner and repository IDs
+  # in the OIDC subject, and Entra matches the subject as an exact string.
+  github_repository = "Pyodin@43958209/azure-landing-zones-with-avm@1376044214"
 
   # A federated credential matches one GitHub subject. That is what separates the
   # two identities: only a job declaring the production environment can obtain the
