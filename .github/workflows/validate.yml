@@ -1,0 +1,62 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "<2.0.0"
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive
+
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        root:
+          - bootstrap
+          - landing-zones/platform/management
+          - landing-zones/platform/identity
+          - landing-zones/platform/connectivity
+          - landing-zones/application/workload-aks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "<2.0.0"
+          terraform_wrapper: false
+
+      # No credentials and no backend: this proves the configuration parses and
+      # its references resolve, nothing about the tenant.
+      - run: terraform -chdir=${{ matrix.root }} init -backend=false
+      - run: terraform -chdir=${{ matrix.root }} validate
+
+      - uses: terraform-linters/setup-tflint@v4
+      - run: tflint --init --config="${GITHUB_WORKSPACE}/.tflint.hcl"
+      - run: tflint --chdir=${{ matrix.root }} --config="${GITHUB_WORKSPACE}/.tflint.hcl"
+
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"

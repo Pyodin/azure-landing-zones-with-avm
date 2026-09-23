@@ -10,60 +10,15 @@ hierarchy, the policy definitions and assignments, and a few role assignments.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph mgmt["Platform — management"]
-        direction TB
-        MG["Management groups<br/>alz · platform · landingzones"]
-        POL["Policy<br/>baseline, Deny<br/>private DNS, DINE"]
-        LAW["Log Analytics workspace"]
-    end
+### Management groups and subscriptions
 
-    subgraph ident["Platform — identity"]
-        APP["VPN custom audience<br/>assignment required"]
-    end
+![Management group hierarchy and subscription placement](doc/architecture-management-groups.drawio.svg)
 
-    subgraph platform["Platform — connectivity"]
-        direction TB
-        subgraph hubvnet["vnet-hub · 10.0.0.0/16"]
-            AFW["Azure Firewall<br/>AzureFirewallSubnet<br/>10.0.0.0/26"]
-            BAS["Bastion (optional)<br/>AzureBastionSubnet<br/>10.0.1.0/26"]
-            VGW["VPN gateway<br/>GatewaySubnet<br/>10.0.2.0/26"]
-            MGMT["Jumpbox (optional)<br/>snet-management<br/>10.0.3.0/27"]
-        end
-        DNS["Private DNS zones<br/>vaultcore · azurecr · blob · azmk8s"]
-    end
+### Resources
 
-    subgraph app["Application — workload-aks"]
-        direction TB
-        subgraph spokevnet["vnet-app · 10.1.0.0/16"]
-            AGW["Application Gateway + WAF<br/>snet-agw · 10.1.5.0/24"]
-            AKS["AKS private cluster<br/>snet-aks · 10.1.0.0/22<br/>Cilium overlay"]
-            PEP["Private endpoints<br/>snet-pep · 10.1.4.0/24"]
-        end
-        ACR["Container Registry"]
-        KV["Key Vault"]
-        ST["Storage Account"]
-    end
+![Resources created by each landing zone](doc/architecture-resources.drawio.svg)
 
-    USER(["Internet"]) -->|"HTTP"| AGW
-    ADMIN(["Administrator"]) -->|"P2S VPN, Entra ID"| VGW
-    spokevnet <-->|"peering + gateway transit"| hubvnet
-    AGW -->|"internal LB 10.1.3.250"| AKS
-    AKS -->|"0.0.0.0/0 via UDR"| AFW
-    AKS -->|"DNS queries"| AFW
-    VGW -.->|"client DNS"| AFW
-    AFW -.->|"DNS proxy"| DNS
-    PEP --- ACR
-    PEP --- KV
-    PEP --- ST
-    AKS -.->|"diagnostics"| LAW
-    AFW -.->|"diagnostics"| LAW
-    MG -.->|"scopes"| POL
-    POL -.->|"writes zone groups"| PEP
-    POL -.->|"writes records"| DNS
-    APP -.->|"audience"| VGW
-```
+Both are editable: see [doc/](doc/).
 
 | Landing zone | Owns |
 |---|---|
@@ -149,6 +104,7 @@ all of it, since the firewall bills per deployment hour.
 
 ```
 bootstrap/                     state storage account and backend.hcl per landing zone
+doc/                           draw.io architecture diagrams, editable and rendered
 landing-zones/
 ├── platform/
 │   ├── management/            governance: management groups, policy, Log Analytics

@@ -6,6 +6,10 @@ terraform {
       source  = "Azure/azapi"
       version = "~> 2.12"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.9"
+    }
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.81"
@@ -16,10 +20,6 @@ terraform {
     }
   }
 
-  # No backend, on purpose. This root creates the storage account every other
-  # root stores its state in, so it cannot store its own state there. Its state
-  # stays local and gitignored, which is the usual answer to that circularity.
-  #
-  # Losing it costs nothing: everything here is idempotent and importable, and
-  # the storage account outlives the state file that describes it.
+  # No backend: this root creates the storage account the others store state in.
+  # Its own state stays local and gitignored.
 }

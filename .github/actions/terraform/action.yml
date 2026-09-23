@@ -1,0 +1,63 @@
+name: terraform
+description: Initialise a landing zone against its state container and run one command.
+
+inputs:
+  zone:
+    description: Landing zone path under landing-zones/
+    required: true
+  command:
+    description: plan or apply
+    required: true
+  resource-group:
+    description: Resource group holding the state storage account
+    required: true
+  storage-account:
+    description: State storage account
+    required: true
+  state-subscription:
+    description: Subscription holding the state storage account, which is not the one being deployed to
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "<2.0.0"
+        terraform_wrapper: false
+
+    # Inputs arrive as environment variables, never interpolated into the script.
+    - shell: bash
+      env:
+        ZONE: ${{ inputs.zone }}
+        COMMAND: ${{ inputs.command }}
+        RESOURCE_GROUP: ${{ inputs.resource-group }}
+        STORAGE_ACCOUNT: ${{ inputs.storage-account }}
+        STATE_SUBSCRIPTION: ${{ inputs.state-subscription }}
+        TF_IN_AUTOMATION: "true"
+      run: |
+        set -euo pipefail
+        root="landing-zones/$ZONE"
+
+        terraform -chdir="$root" init -input=false \
+          -backend-config="resource_group_name=$RESOURCE_GROUP" \
+          -backend-config="storage_account_name=$STORAGE_ACCOUNT" \
+          -backend-config="subscription_id=$STATE_SUBSCRIPTION" \
+          -backend-config="container_name=${ZONE//\//-}" \
+          -backend-config="key=terraform.tfstate" \
+          -backend-config="use_azuread_auth=true"
+
+        if [ "$COMMAND" = "apply" ]; then
+          terraform -chdir="$root" apply -input=false -auto-approve -lock-timeout=5m
+          exit 0
+        fi
+
+        terraform -chdir="$root" plan -input=false -lock-timeout=5m -no-color | tee plan.txt
+        {
+          echo "<details><summary><code>$ZONE</code></summary>"
+          echo
+          echo '```terraform'
+          tail -c 50000 plan.txt
+          echo '```'
+          echo "</details>"
+        } >> "$GITHUB_STEP_SUMMARY"

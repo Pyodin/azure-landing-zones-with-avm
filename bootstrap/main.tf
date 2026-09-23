@@ -10,9 +10,7 @@ module "resource_group" {
   tags             = local.tags
 }
 
-# Shared keys are disabled, so Terraform reaches the data plane with Entra ID.
-# Public network access stays on because Terraform runs from a laptop or a hosted
-# agent; a private endpoint here means a self-hosted agent inside the network.
+# Public: a private endpoint here would mean a self-hosted runner inside the network.
 module "storage_account" {
   source  = "Azure/avm-res-storage-storageaccount/azurerm"
   version = "0.10.0"
@@ -25,7 +23,7 @@ module "storage_account" {
 
   account_kind             = "StorageV2"
   account_tier             = "Standard"
-  account_replication_type = "ZRS"
+  account_replication_type = "LRS"
   access_tier              = "Hot"
 
   public_network_access_enabled   = true
@@ -35,9 +33,6 @@ module "storage_account" {
   https_traffic_only_enabled      = true
   allow_nested_items_to_be_public = false
 
-  # Versioning and soft delete are the whole point of keeping state in a blob. A
-  # corrupted apply is recoverable from a previous version, a deleted container
-  # for as long as the retention window.
   blob_properties = {
     versioning_enabled = true
     delete_retention_policy = {
@@ -52,14 +47,11 @@ module "storage_account" {
 
   containers = {
     for zone in local.landing_zones : zone => {
-      # platform/connectivity becomes platform-connectivity, which is a valid
-      # container name and reads the same as the directory it belongs to.
       name = replace(zone, "/", "-")
     }
   }
 
-  # Control plane Owner does not grant access to a blob, and never has. Whoever
-  # runs this needs the data role to read and write state afterwards.
+  # Control plane Owner does not grant access to a blob.
   role_assignments = {
     deployer = {
       role_definition_id_or_name = "Storage Blob Data Owner"
@@ -68,9 +60,7 @@ module "storage_account" {
   }
 }
 
-# Terraform cannot configure its own backend from a computed value, so the
-# configuration is written out instead and passed with -backend-config. The file
-# is gitignored: it names a storage account belonging to one tenant.
+# A backend cannot be configured from a computed value, so it is written out instead.
 resource "local_file" "backend" {
   for_each = toset(local.landing_zones)
 

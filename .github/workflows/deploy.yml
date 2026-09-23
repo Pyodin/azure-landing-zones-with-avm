@@ -1,0 +1,110 @@
+name: deploy
+
+# Nothing is applied from a laptop. Pull requests plan; an apply is a deliberate
+# dispatch that waits on the reviewer attached to the production environment.
+on:
+  pull_request:
+    paths:
+      - "landing-zones/**"
+      - ".github/workflows/deploy.yml"
+      - ".github/actions/terraform/**"
+      - ".github/landing-zones.json"
+  workflow_dispatch:
+    inputs:
+      landing_zone:
+        description: Landing zone to act on
+        type: choice
+        default: all
+        options:
+          - all
+          - platform/management
+          - platform/identity
+          - platform/connectivity
+          - application/workload-aks
+      action:
+        description: plan only, or plan and apply
+        type: choice
+        default: plan
+        options: [plan, apply]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ARM_USE_OIDC: true
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+
+jobs:
+  setup:
+    # A fork's pull request is never given id-token: write, so the login would
+    # fail anyway. Skipping keeps the check green for outside contributors.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      zones: ${{ steps.zones.outputs.zones }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: zones
+        env:
+          SELECTED: ${{ inputs.landing_zone }}
+        run: |
+          set -euo pipefail
+          zones=$(jq -c --arg s "${SELECTED:-all}" \
+            'if $s == "all" or $s == "" then . else map(select(.zone == $s)) end' \
+            .github/landing-zones.json)
+          echo "zones=$zones" >> "$GITHUB_OUTPUT"
+
+  plan:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.setup.outputs.zones) }}
+    concurrency:
+      group: tfstate-${{ matrix.zone }}
+      cancel-in-progress: false
+    env:
+      ARM_CLIENT_ID: ${{ vars.AZURE_PLAN_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ matrix.subscription }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/terraform
+        with:
+          zone: ${{ matrix.zone }}
+          command: plan
+          resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
+          storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
+          state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}
+
+  apply:
+    needs: [setup, plan]
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'apply'
+    runs-on: ubuntu-latest
+    # Holds the run until a reviewer approves, and is the subject of the only
+    # federated credential bound to the identity that can write.
+    environment: production
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        include: ${{ fromJSON(needs.setup.outputs.zones) }}
+    concurrency:
+      group: tfstate-${{ matrix.zone }}
+      cancel-in-progress: false
+    env:
+      ARM_CLIENT_ID: ${{ vars.AZURE_APPLY_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ matrix.subscription }}
+    steps:
+      - uses: actions/checkout@v4
+      # Replanned rather than carried over: a plan file can hold values Terraform
+      # would otherwise mask, and an artifact on a public repository is readable
+      # by anyone.
+      - uses: ./.github/actions/terraform
+        with:
+          zone: ${{ matrix.zone }}
+          command: apply
+          resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
+          storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
+          state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}

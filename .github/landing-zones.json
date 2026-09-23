@@ -1,0 +1,18 @@
+[
+  {
+    "zone": "platform/management",
+    "subscription": "535e631d-1f74-4fd4-b38e-fbd577b8c817"
+  },
+  {
+    "zone": "platform/identity",
+    "subscription": "535e631d-1f74-4fd4-b38e-fbd577b8c817"
+  },
+  {
+    "zone": "platform/connectivity",
+    "subscription": "1bc5bd17-f629-4778-9b62-4576f594cbb6"
+  },
+  {
+    "zone": "application/workload-aks",
+    "subscription": "a3dd6f19-8aca-4245-828f-968f9de0c43e"
+  }
+]
