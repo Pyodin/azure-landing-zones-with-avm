@@ -46,7 +46,7 @@ jobs:
       - run: terraform -chdir=${{ matrix.root }} init -backend=false
       - run: terraform -chdir=${{ matrix.root }} validate
 
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: terraform-linters/setup-tflint@v6
       - run: tflint --init --config="${GITHUB_WORKSPACE}/.tflint.hcl"
       - run: tflint --chdir=${{ matrix.root }} --config="${GITHUB_WORKSPACE}/.tflint.hcl"
 
