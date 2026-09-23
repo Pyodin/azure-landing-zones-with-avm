@@ -8,14 +8,23 @@ inputs:
   command:
     description: plan or apply
     required: true
-  resource-group:
+  client-id:
+    description: Managed identity to authenticate as
+    required: true
+  tenant-id:
+    description: Tenant the identity belongs to
+    required: true
+  subscription:
+    description: Subscription this landing zone deploys into
+    required: true
+  state-resource-group:
     description: Resource group holding the state storage account
     required: true
-  storage-account:
+  state-storage-account:
     description: State storage account
     required: true
   state-subscription:
-    description: Subscription holding the state storage account, which is not the one being deployed to
+    description: Subscription holding the state storage account, which is not the one deployed into
     required: true
 
 runs:
@@ -26,26 +35,35 @@ runs:
         terraform_version: "<2.0.0"
         terraform_wrapper: false
 
-    # Inputs arrive as environment variables, never interpolated into the script.
+    # The backend authenticates separately from the provider and shares none of its
+    # configuration, so it is told the identity, the tenant and to use OIDC explicitly.
+    # Left to infer, it walks the auth chain down to the Azure CLI and fails on a runner.
     - shell: bash
       env:
         ZONE: ${{ inputs.zone }}
         COMMAND: ${{ inputs.command }}
-        RESOURCE_GROUP: ${{ inputs.resource-group }}
-        STORAGE_ACCOUNT: ${{ inputs.storage-account }}
+        STATE_RESOURCE_GROUP: ${{ inputs.state-resource-group }}
+        STATE_STORAGE_ACCOUNT: ${{ inputs.state-storage-account }}
         STATE_SUBSCRIPTION: ${{ inputs.state-subscription }}
+        ARM_USE_OIDC: "true"
+        ARM_CLIENT_ID: ${{ inputs.client-id }}
+        ARM_TENANT_ID: ${{ inputs.tenant-id }}
+        ARM_SUBSCRIPTION_ID: ${{ inputs.subscription }}
         TF_IN_AUTOMATION: "true"
       run: |
         set -euo pipefail
         root="landing-zones/$ZONE"
 
         terraform -chdir="$root" init -input=false \
-          -backend-config="resource_group_name=$RESOURCE_GROUP" \
-          -backend-config="storage_account_name=$STORAGE_ACCOUNT" \
+          -backend-config="resource_group_name=$STATE_RESOURCE_GROUP" \
+          -backend-config="storage_account_name=$STATE_STORAGE_ACCOUNT" \
           -backend-config="subscription_id=$STATE_SUBSCRIPTION" \
           -backend-config="container_name=${ZONE//\//-}" \
           -backend-config="key=terraform.tfstate" \
-          -backend-config="use_azuread_auth=true"
+          -backend-config="use_azuread_auth=true" \
+          -backend-config="use_oidc=true" \
+          -backend-config="client_id=$ARM_CLIENT_ID" \
+          -backend-config="tenant_id=$ARM_TENANT_ID"
 
         if [ "$COMMAND" = "apply" ]; then
           terraform -chdir="$root" apply -input=false -auto-approve -lock-timeout=5m

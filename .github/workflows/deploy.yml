@@ -31,10 +31,6 @@ permissions:
   contents: read
   id-token: write
 
-env:
-  ARM_USE_OIDC: true
-  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-
 jobs:
   setup:
     # A fork's pull request is never given id-token: write, so the login would
@@ -45,6 +41,7 @@ jobs:
       zones: ${{ steps.zones.outputs.zones }}
     steps:
       - uses: actions/checkout@v4
+
       - id: zones
         env:
           SELECTED: ${{ inputs.landing_zone }}
@@ -65,17 +62,17 @@ jobs:
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
-    env:
-      ARM_CLIENT_ID: ${{ vars.AZURE_PLAN_CLIENT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ matrix.subscription }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/terraform
         with:
           zone: ${{ matrix.zone }}
           command: plan
-          resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
-          storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
+          client-id: ${{ vars.AZURE_PLAN_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription: ${{ matrix.subscription }}
+          state-resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
+          state-storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
           state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}
 
   apply:
@@ -93,9 +90,6 @@ jobs:
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
-    env:
-      ARM_CLIENT_ID: ${{ vars.AZURE_APPLY_CLIENT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ matrix.subscription }}
     steps:
       - uses: actions/checkout@v4
       # Replanned rather than carried over: a plan file can hold values Terraform
@@ -105,6 +99,9 @@ jobs:
         with:
           zone: ${{ matrix.zone }}
           command: apply
-          resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
-          storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
+          client-id: ${{ vars.AZURE_APPLY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription: ${{ matrix.subscription }}
+          state-resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
+          state-storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
           state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}

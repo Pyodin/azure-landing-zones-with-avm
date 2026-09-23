@@ -74,6 +74,7 @@ resource "local_file" "backend" {
     container_name       = "${replace(each.value, "/", "-")}"
     key                  = "terraform.tfstate"
     subscription_id      = "${local.subscription_id}"
+    tenant_id            = "${data.azurerm_client_config.current.tenant_id}"
     use_azuread_auth     = true
   EOT
 
