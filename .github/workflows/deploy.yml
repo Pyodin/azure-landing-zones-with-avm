@@ -8,7 +8,6 @@ on:
       - "landing-zones/**"
       - ".github/workflows/deploy.yml"
       - ".github/actions/terraform/**"
-      - ".github/landing-zones.json"
   workflow_dispatch:
     inputs:
       landing_zone:
@@ -20,7 +19,6 @@ on:
           - platform/management
           - platform/identity
           - platform/connectivity
-          - application/workload-aks
       action:
         description: plan only, or plan and apply
         type: choice
@@ -32,51 +30,37 @@ permissions:
   id-token: write
 
 jobs:
-  setup:
-    # A fork's pull request is never given id-token: write, so the login would
-    # fail anyway. Skipping keeps the check green for outside contributors.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    outputs:
-      zones: ${{ steps.zones.outputs.zones }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: zones
-        env:
-          SELECTED: ${{ inputs.landing_zone }}
-        run: |
-          set -euo pipefail
-          zones=$(jq -c --arg s "${SELECTED:-all}" \
-            'if $s == "all" or $s == "" then . else map(select(.zone == $s)) end' \
-            .github/landing-zones.json)
-          echo "zones=$zones" >> "$GITHUB_OUTPUT"
-
   plan:
-    needs: setup
+    # A fork's pull request is never given id-token: write, so the login would fail
+    # anyway. Skipping keeps the check green for outside contributors.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.setup.outputs.zones) }}
+        zone:
+          - platform/management
+          - platform/identity
+          - platform/connectivity
+          # - application/workload-aks
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/terraform
+      - if: github.event_name == 'pull_request' || inputs.landing_zone == 'all' || inputs.landing_zone == matrix.zone
+        uses: ./.github/actions/terraform
         with:
           zone: ${{ matrix.zone }}
           command: plan
           client-id: ${{ vars.AZURE_PLAN_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription: ${{ matrix.subscription }}
           state-resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
           state-storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
           state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}
 
   apply:
-    needs: [setup, plan]
+    needs: plan
     if: github.event_name == 'workflow_dispatch' && inputs.action == 'apply'
     runs-on: ubuntu-latest
     # Holds the run until a reviewer approves, and is the subject of the only
@@ -86,22 +70,25 @@ jobs:
       fail-fast: true
       max-parallel: 1
       matrix:
-        include: ${{ fromJSON(needs.setup.outputs.zones) }}
+        zone:
+          - platform/management
+          - platform/identity
+          - platform/connectivity
+          # - application/workload-aks
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      # Replanned rather than carried over: a plan file can hold values Terraform
-      # would otherwise mask, and an artifact on a public repository is readable
-      # by anyone.
-      - uses: ./.github/actions/terraform
+      # Replanned rather than carried over: a plan file can hold values Terraform would
+      # otherwise mask, and an artifact on a public repository is readable by anyone.
+      - if: inputs.landing_zone == 'all' || inputs.landing_zone == matrix.zone
+        uses: ./.github/actions/terraform
         with:
           zone: ${{ matrix.zone }}
           command: apply
           client-id: ${{ vars.AZURE_APPLY_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription: ${{ matrix.subscription }}
           state-resource-group: ${{ vars.TFSTATE_RESOURCE_GROUP }}
           state-storage-account: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
           state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}

@@ -14,9 +14,6 @@ inputs:
   tenant-id:
     description: Tenant the identity belongs to
     required: true
-  subscription:
-    description: Subscription this landing zone deploys into
-    required: true
   state-resource-group:
     description: Resource group holding the state storage account
     required: true
@@ -48,7 +45,6 @@ runs:
         ARM_USE_OIDC: "true"
         ARM_CLIENT_ID: ${{ inputs.client-id }}
         ARM_TENANT_ID: ${{ inputs.tenant-id }}
-        ARM_SUBSCRIPTION_ID: ${{ inputs.subscription }}
         TF_IN_AUTOMATION: "true"
       run: |
         set -euo pipefail

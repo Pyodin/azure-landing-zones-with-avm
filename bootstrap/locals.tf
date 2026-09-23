@@ -1,6 +1,6 @@
 locals {
-  # The state account lives here. A landing zone deploys elsewhere and is told this
-  # explicitly, because the backend does not follow ARM_SUBSCRIPTION_ID.
+  # The state account lives here. A landing zone deploys into its own subscription and
+  # is told this one separately, in its backend configuration.
   subscription_id = "535e631d-1f74-4fd4-b38e-fbd577b8c817"
 
   location       = "francecentral"

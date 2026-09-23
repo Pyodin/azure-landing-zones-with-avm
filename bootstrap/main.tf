@@ -10,7 +10,9 @@ module "resource_group" {
   tags             = local.tags
 }
 
-# Public: a private endpoint here would mean a self-hosted runner inside the network.
+# The data plane is reached from GitHub-hosted runners: no private endpoint, and no
+# address range worth allow-listing. Shared keys are off, so a caller still needs an
+# Entra token and a role assignment.
 module "storage_account" {
   source  = "Azure/avm-res-storage-storageaccount/azurerm"
   version = "0.10.0"
@@ -26,8 +28,14 @@ module "storage_account" {
   account_replication_type = "LRS"
   access_tier              = "Hot"
 
-  public_network_access_enabled   = true
-  shared_access_key_enabled       = false
+  public_network_access_enabled = true
+  shared_access_key_enabled     = false
+
+  # The module defaults this to Deny, which refuses every caller including the runners.
+  network_rules = {
+    default_action = "Allow"
+  }
+
   default_to_oauth_authentication = true
   min_tls_version                 = "TLS1_2"
   https_traffic_only_enabled      = true
