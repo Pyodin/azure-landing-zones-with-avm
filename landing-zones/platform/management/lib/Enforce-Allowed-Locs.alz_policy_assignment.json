@@ -16,7 +16,7 @@
     ],
     "parameters": {
       "listOfAllowedLocations": {
-        "value": ["${default_location}"]
+        "value": []
       }
     },
     "scope": "/providers/Microsoft.Management/managementGroups/placeholder",

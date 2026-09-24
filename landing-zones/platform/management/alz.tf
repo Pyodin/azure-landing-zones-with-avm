@@ -26,6 +26,11 @@ module "alz" {
             enableAscForAI = jsonencode({ value = "Disabled" })
           }
         }
+        Enforce-Allowed-Locs = {
+          parameters = {
+            listOfAllowedLocations = jsonencode({ value = [local.location] })
+          }
+        }
       }
     }
     (local.management_group_ids.corp) = {
