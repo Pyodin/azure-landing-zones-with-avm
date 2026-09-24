@@ -18,6 +18,11 @@ output "vpn_client_address_space" {
   value       = local.deploy_vpn ? local.vpn_client_address_space : ""
 }
 
+output "dns_forwarder_ip" {
+  description = "DNS server for VPN clients, to add to the VPN client profile. Empty when deploy_dns_forwarder is false."
+  value       = try(module.dns_forwarder[0].ip_address, "")
+}
+
 # Mirrors the "connectivity" block in the management landing zone locals.
 output "management_inputs" {
   description = "Values to copy into the management landing zone locals."
@@ -27,16 +32,11 @@ output "management_inputs" {
   }
 }
 
-# Mirrors the "hub" block in the application landing zone locals.
-output "spoke_inputs" {
-  description = "Values to copy into the application landing zone locals."
+# Mirrors the "connectivity" block in the subscriptions landing zone locals.
+output "subscriptions_inputs" {
+  description = "Values to copy into the subscriptions landing zone locals."
   value = {
-    subscription_id         = local.subscription_id
-    resource_group_name     = module.resource_group_connectivity.name
-    dns_resource_group_name = length(local.private_dns_zones) > 0 ? local.names.resource_group_dns : ""
-    virtual_network_name    = local.names.virtual_network
-    firewall_name           = local.deploy_firewall ? local.names.firewall : ""
-    has_firewall            = local.deploy_firewall
-    has_vpn_gateway         = local.deploy_vpn
+    virtual_network_id = module.hub.virtual_network_resource_ids["primary"]
+    has_vpn_gateway    = local.deploy_vpn
   }
 }

@@ -13,11 +13,10 @@ locals {
 
   enable_telemetry = false
 
-  # Everything off: the hub is a virtual network only. Turning the firewall or the
-  # VPN on also requires has_firewall / has_vpn_gateway = true in spokes.
-  deploy_firewall = false # Basic, ~€250/month
-  deploy_vpn      = false # VpnGw1AZ, ~€130/month
-  deploy_bastion  = false # Developer SKU is free; the jumpbox VM is ~€9/month
+  deploy_firewall      = false # Basic, ~€250/month
+  deploy_vpn           = true  # VpnGw1AZ, ~€130/month
+  deploy_bastion       = false # Developer SKU is free; the jumpbox VM is ~€9/month
+  deploy_dns_forwarder = true  # CoreDNS for VPN clients, ~€17/month
 
   jumpbox_size = "Standard_B2ats_v2"
 
@@ -29,6 +28,7 @@ locals {
     firewall_management = "10.0.0.64/26"
     gateway             = "10.0.2.0/27"
     management          = "10.0.3.0/27"
+    dns_forwarder       = "10.0.4.0/28"
   }
 
   vpn_client_address_space = "172.20.0.0/24"
@@ -61,6 +61,8 @@ locals {
     bastion                     = "bas-hub-${local.suffix}"
     jumpbox                     = "vm-jump-${local.suffix}"
     jumpbox_nic                 = "nic-jump-${local.suffix}"
+    dns_forwarder               = "ci-dns-hub-${local.suffix}"
+    dns_forwarder_subnet        = "snet-dns-${local.suffix}"
   }
 
   tags = {

@@ -2,8 +2,6 @@ module "management_nsg" {
   source  = "Azure/avm-res-network-networksecuritygroup/azurerm"
   version = "0.5.1"
 
-  count = local.deploy_bastion ? 1 : 0
-
   name                = local.names.management_nsg
   location            = local.location
   resource_group_name = module.resource_group_connectivity.name
@@ -87,12 +85,12 @@ module "hub" {
         mesh_peering_enabled             = false
         route_table_user_subnets_enabled = false
 
-        subnets = local.deploy_bastion ? {
+        subnets = {
           management = {
             name             = local.names.management_subnet
             address_prefixes = [local.subnet_prefixes.management]
             network_security_group = {
-              id = module.management_nsg[0].resource_id
+              id = module.management_nsg.resource_id
             }
             route_table = {
               assign_generated_route_table = false
@@ -100,7 +98,22 @@ module "hub" {
             # The jumpbox installs its tooling from the internet.
             default_outbound_access_enabled = true
           }
-        } : {}
+          dns_forwarder = {
+            name             = local.names.dns_forwarder_subnet
+            address_prefixes = [local.subnet_prefixes.dns_forwarder]
+            delegations = [{
+              name = "aci"
+              service_delegation = {
+                name = "Microsoft.ContainerInstance/containerGroups"
+              }
+            }]
+            route_table = {
+              assign_generated_route_table = false
+            }
+            # The container group pulls its image from mcr.microsoft.com.
+            default_outbound_access_enabled = true
+          }
+        }
       }
 
       # Basic gets its management subnet and second public IP from the module.

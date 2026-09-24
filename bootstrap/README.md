@@ -49,5 +49,5 @@ local and gitignored; losing it means importing a few resources, not rebuilding 
 carries no network rules: a hosted runner has no address range worth allow-listing.
 Locking it down means a private endpoint and a self-hosted runner.
 
-**Adding a landing zone:** `landing_zones` here, then both matrices in
-`.github/workflows/deploy.yml`.
+**Adding a landing zone root:** `landing_zones` here, then the lists in
+`.github/workflows/deploy.yml`, `validate.yml` and `dependabot.yml`.

@@ -41,8 +41,8 @@ See [effect basics](https://learn.microsoft.com/azure/governance/policy/concepts
 ## Cost
 
 Policy itself is free. What costs money is what a `DeployIfNotExists` assignment
-deploys, and the data it sends to Log Analytics. Idle, with no VMs or databases, this
-root runs at a few euros a month: the workspace, capped at 1 GB/day (~€2.37/GB).
+deploys, and the data it sends to Log Analytics. Idle, with no VMs or databases, the only
+cost is the workspace: ~€2.37/GB ingested, under the daily cap set in `locals.tf`.
 
 Removed in `lib/`, with what they would cost:
 
