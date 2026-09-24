@@ -4,7 +4,7 @@ output "vpn_audience_client_id" {
 }
 
 output "vpn_enterprise_application_object_id" {
-  description = "Enterprise application that carries the VPN user and group assignments."
+  description = "Enterprise application to assign the VPN user groups to, by hand."
   value       = module.vpn_app_registration.service_principal_object_id
 }
 

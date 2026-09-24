@@ -1,24 +1,13 @@
-# Custom audience application for the hub point-to-site gateway. The
-# Microsoft-registered Azure VPN Client is shared by every tenant, so it cannot
-# carry user assignments: pointing the gateway at an application of our own is
-# what makes "only this group connects" expressible at all. The Azure VPN Client
-# is pre-authorized against the scope, so users never see a consent prompt, and
-# the enterprise application requires an assignment, so an account outside
-# vpn_user_group_object_ids is refused before it reaches the gateway.
-#
-# Note what an assignment does and does not buy. It gets a user onto the
-# network, and nothing more. Reaching a private endpoint still needs a firewall
-# or NSG rule, and reading a secret still needs Azure RBAC on the Key Vault.
-# Resolving the endpoint's name needs none of the three, which is why DNS is
-# never the control.
+# Custom audience for the hub point-to-site gateway, so access can be limited
+# to assigned users.
 module "vpn_app_registration" {
-  source = "../../../modules/app-registration"
+  # Pinned to a commit: the module carries no tags yet.
+  source = "git::https://github.com/Pyodin/terraform-azurerm-avm-res-aad-appregistration.git?ref=f783f57a75052d3c609c9c31437abbcce1f4b56a"
 
   name             = local.names.vpn_app_registration
   description      = "Custom audience for the hub point-to-site VPN gateway."
   sign_in_audience = "AzureADMyOrg"
 
-  # "Assignment required" on the enterprise application.
   service_principal_app_role_assignment_required = true
 
   oauth2_permission_scopes = {
@@ -39,8 +28,6 @@ module "vpn_app_registration" {
     }
   }
 
-  # An app role is how a group assignment is expressed declaratively. The
-  # gateway never reads the role, it only cares that an assignment exists.
   app_roles = {
     vpn_user = {
       allowed_member_types = ["User"]
@@ -50,10 +37,6 @@ module "vpn_app_registration" {
     }
   }
 
-  app_role_assignments = {
-    for group_object_id in local.vpn_user_group_object_ids : group_object_id => {
-      app_role_key        = "vpn_user"
-      principal_object_id = group_object_id
-    }
-  }
+  # Groups are assigned by hand: AppRoleAssignment.ReadWrite.All would let CI
+  # grant itself any Graph role.
 }
