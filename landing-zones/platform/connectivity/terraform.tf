@@ -1,9 +1,9 @@
 terraform {
-  required_version = ">= 1.11, < 2.0"
+  required_version = ">= 1.12, < 2.0"
 
   required_providers {
     azapi = {
-      source  = "Azure/azapi"
+      source  = "azure/azapi"
       version = "~> 2.12"
     }
     azurerm = {
@@ -12,10 +12,5 @@ terraform {
     }
   }
 
-  # Configuration comes from backend.hcl, which the bootstrap root writes. The block
-  # is deliberately empty: the storage account name depends on the tenant this is
-  # deployed into, so it is not a constant that belongs in the repository.
-  #
-  #   terraform init -backend-config=backend.hcl
   backend "azurerm" {}
 }

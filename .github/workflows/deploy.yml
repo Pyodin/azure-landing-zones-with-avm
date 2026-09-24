@@ -31,7 +31,26 @@ permissions:
   id-token: write
 
 jobs:
+  # Only the selected zones get a job, and so an approval.
+  zones:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.pick.outputs.list }}
+    steps:
+      - id: pick
+        env:
+          SELECTED: ${{ inputs.landing_zone || 'all' }}
+        # Apply order: with private DNS on, management grants roles on the hub's zones.
+        run: |
+          if [ "$SELECTED" = "all" ]; then
+            list='["platform/identity","platform/connectivity","platform/management","platform/subscriptions"]'
+          else
+            list="[\"$SELECTED\"]"
+          fi
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+
   plan:
+    needs: zones
     # A fork's pull request is never given id-token: write, so the login would fail
     # anyway. Skipping keeps the check green for outside contributors.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -39,18 +58,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zone:
-          - platform/identity
-          - platform/connectivity
-          - platform/management
-          - platform/subscriptions
+        zone: ${{ fromJSON(needs.zones.outputs.list) }}
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - if: github.event_name == 'pull_request' || inputs.landing_zone == 'all' || inputs.landing_zone == matrix.zone
-        uses: ./.github/actions/terraform
+      - uses: ./.github/actions/terraform
         with:
           zone: ${{ matrix.zone }}
           command: plan
@@ -61,22 +75,18 @@ jobs:
           state-subscription: ${{ vars.TFSTATE_SUBSCRIPTION_ID }}
 
   apply:
-    needs: plan
+    needs: [zones, plan]
     if: github.event_name == 'workflow_dispatch' && inputs.action == 'apply'
     runs-on: ubuntu-latest
-    # Holds the run until a reviewer approves, and is the subject of the only
+    # Holds each job until a reviewer approves, and is the subject of the only
     # federated credential bound to the identity that can write.
     environment: production
-    # Matrix order is apply order: management grants roles on the hub's DNS zones.
+    # One zone at a time, in list order; a failure cancels the zones after it.
     strategy:
       fail-fast: true
       max-parallel: 1
       matrix:
-        zone:
-          - platform/identity
-          - platform/connectivity
-          - platform/management
-          - platform/subscriptions
+        zone: ${{ fromJSON(needs.zones.outputs.list) }}
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
@@ -84,8 +94,9 @@ jobs:
       - uses: actions/checkout@v4
       # Replanned rather than carried over: a plan file can hold values Terraform would
       # otherwise mask, and an artifact on a public repository is readable by anyone.
-      - if: inputs.landing_zone == 'all' || inputs.landing_zone == matrix.zone
-        uses: ./.github/actions/terraform
+      # TODO: apply the reviewed plan instead, as an encrypted artifact from the plan
+      # job, so a change made between plan and approval cannot slip into the apply.
+      - uses: ./.github/actions/terraform
         with:
           zone: ${{ matrix.zone }}
           command: apply

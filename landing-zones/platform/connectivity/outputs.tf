@@ -1,58 +1,42 @@
-output "resource_group_name" {
-  description = "Connectivity resource group holding the hub network and firewall."
-  value       = module.resource_group_connectivity.name
-}
-
-output "virtual_network_name" {
-  description = "Hub virtual network name, consumed by spoke landing zones for peering."
-  value       = module.hub_virtual_network.name
-}
-
 output "virtual_network_id" {
   description = "Hub virtual network resource ID."
-  value       = module.hub_virtual_network.resource_id
-}
-
-output "firewall_name" {
-  description = "Azure Firewall name."
-  value       = module.firewall.resource.name
+  value       = module.hub.virtual_network_resource_ids["primary"]
 }
 
 output "firewall_private_ip" {
-  description = "Azure Firewall private IP, used as the next hop and DNS server for spokes."
-  value       = module.firewall.resource.ip_configuration[0].private_ip_address
+  description = "Next hop for spoke default routes. Empty when deploy_firewall is false."
+  value       = try(module.hub.firewall_private_ip_addresses["primary"], "")
 }
 
 output "private_dns_zone_resource_ids" {
-  description = "Private DNS zones keyed by their module key."
-  value       = module.private_dns_zones.private_dns_zone_resource_ids
+  description = "Private DNS zones, keyed like local.private_dns_zones. Empty when local.private_dns_zones is."
+  value       = try(module.hub.private_dns_zone_resource_ids["primary"], {})
+}
+
+output "vpn_client_address_space" {
+  description = "Address pool handed to VPN clients. Empty when deploy_vpn is false."
+  value       = local.deploy_vpn ? local.vpn_client_address_space : ""
+}
+
+# Mirrors the "connectivity" block in the management landing zone locals.
+output "management_inputs" {
+  description = "Values to copy into the management landing zone locals."
+  value = {
+    subscription_id         = local.subscription_id
+    dns_resource_group_name = local.names.resource_group_dns
+  }
 }
 
 # Mirrors the "hub" block in the application landing zone locals.
 output "spoke_inputs" {
   description = "Values to copy into the application landing zone locals."
   value = {
-    subscription_id         = data.azurerm_client_config.current.subscription_id
+    subscription_id         = local.subscription_id
     resource_group_name     = module.resource_group_connectivity.name
-    dns_resource_group_name = module.resource_group_dns.name
-    virtual_network_name    = module.hub_virtual_network.name
-    firewall_name           = module.firewall.resource.name
+    dns_resource_group_name = length(local.private_dns_zones) > 0 ? local.names.resource_group_dns : ""
+    virtual_network_name    = local.names.virtual_network
+    firewall_name           = local.deploy_firewall ? local.names.firewall : ""
+    has_firewall            = local.deploy_firewall
+    has_vpn_gateway         = local.deploy_vpn
   }
-}
-
-output "vpn_gateway_name" {
-  description = "Point-to-site VPN gateway name, empty when deploy_vpn is false."
-  value       = local.deploy_vpn ? local.names.vpn_gateway : ""
-}
-
-output "vpn_client_address_space" {
-  description = "Address pool handed to connected VPN clients."
-  value       = local.deploy_vpn ? local.vpn_client_address_space : ""
-}
-
-# The Azure VPN Client does not receive a DNS server automatically. Add this IP
-# to the downloaded azurevpnconfig.xml to resolve private endpoints.
-output "vpn_client_dns_server" {
-  description = "DNS server VPN clients must use: the firewall DNS proxy."
-  value       = local.deploy_vpn ? module.firewall.resource.ip_configuration[0].private_ip_address : ""
 }

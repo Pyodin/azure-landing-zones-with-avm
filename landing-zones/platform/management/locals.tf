@@ -1,9 +1,18 @@
 locals {
   subscription_id = "535e631d-1f74-4fd4-b38e-fbd577b8c817"
 
+  # Outputs of platform/connectivity.
   connectivity = {
     subscription_id         = "1bc5bd17-f629-4778-9b62-4576f594cbb6"
     dns_resource_group_name = "rg-dns-prod-frc-001"
+  }
+
+  # Policy parameter => zone, for the zones platform/connectivity deploys. The policy
+  # is granted a role on each, so they must exist first. Empty: no policy assignment.
+  private_dns_zones = {
+    # azureKeyVaultPrivateDnsZoneId    = "privatelink.vaultcore.azure.net"
+    # azureAcrPrivateDnsZoneId         = "privatelink.azurecr.io"
+    # azureStorageBlobPrivateDnsZoneId = "privatelink.blob.core.windows.net"
   }
 
   location       = "francecentral"

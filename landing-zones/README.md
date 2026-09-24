@@ -8,12 +8,12 @@ Apply in this order. Each prints the values the next needs.
 | Order | Landing zone | Owns |
 |---|---|---|
 | 1 | `platform/identity` | Entra ID objects |
-| 2 | `platform/connectivity` | Hub network, private DNS zones, optional firewall, VPN and Bastion |
+| 2 | `platform/connectivity` | Hub network; optional firewall, VPN, Bastion and private DNS zones |
 | 3 | `platform/management` | Management groups, ALZ policy, Log Analytics |
 | 4 | `platform/subscriptions` | Budgets on the platform subscriptions |
 
-Connectivity comes before management: the private DNS policy is granted a role on each
-zone, so the zones must exist first.
+With private DNS on, connectivity comes before management: the private DNS policy is
+granted a role on each zone, so the zones must exist first.
 
 Every root keeps the same file names:
 

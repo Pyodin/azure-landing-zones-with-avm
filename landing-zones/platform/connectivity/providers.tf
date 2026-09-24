@@ -3,14 +3,7 @@ provider "azurerm" {
   features {}
 }
 
-# Reads the shared workspace and grants the policy identity access to the DNS
-# zones, both in the management subscription.
-provider "azurerm" {
-  alias           = "platform"
-  subscription_id = local.platform.subscription_id
-  features {}
-}
-
+# Left unset, azapi resolves the subscription to "" and the apply fails.
 provider "azapi" {
   subscription_id = local.subscription_id
 }

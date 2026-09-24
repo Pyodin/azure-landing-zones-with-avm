@@ -1,50 +1,10 @@
-module "firewall_public_ip" {
-  source  = "Azure/avm-res-network-publicipaddress/azurerm"
-  version = "0.2.1"
-
-  name                = local.names.firewall_public_ip
-  location            = local.location
-  resource_group_name = module.resource_group_connectivity.name
-  enable_telemetry    = local.enable_telemetry
-  tags                = local.tags
-
-  allocation_method = "Static"
-  sku               = "Standard"
-  zones             = ["1", "2", "3"]
-
-  diagnostic_settings = {
-    law = {
-      name                  = "diag-to-law"
-      workspace_resource_id = data.azurerm_log_analytics_workspace.platform.id
-    }
-  }
-}
-
-module "firewall_policy" {
-  source  = "Azure/avm-res-network-firewallpolicy/azurerm"
-  version = "0.3.4"
-
-  name                = local.names.firewall_policy
-  location            = local.location
-  resource_group_name = module.resource_group_connectivity.name
-  enable_telemetry    = local.enable_telemetry
-  tags                = local.tags
-
-  firewall_policy_sku                      = "Standard"
-  firewall_policy_threat_intelligence_mode = "Alert"
-
-  # The DNS proxy lets spokes use the firewall as their DNS server, so private
-  # endpoint records resolve through the zones linked to the hub network.
-  firewall_policy_dns = {
-    proxy_enabled = true
-  }
-}
-
 module "firewall_rules" {
   source  = "Azure/avm-res-network-firewallpolicy/azurerm//modules/rule_collection_groups"
   version = "0.3.4"
 
-  firewall_policy_rule_collection_group_firewall_policy_id = module.firewall_policy.resource_id
+  count = local.deploy_firewall ? 1 : 0
+
+  firewall_policy_rule_collection_group_firewall_policy_id = module.hub.firewall_policies["primary"].id
   firewall_policy_rule_collection_group_name               = "rcg-spoke-egress"
   firewall_policy_rule_collection_group_priority           = 500
 
@@ -136,37 +96,4 @@ module "firewall_rules" {
       ]
     },
   ]
-}
-
-module "firewall" {
-  source  = "Azure/avm-res-network-azurefirewall/azurerm"
-  version = "0.4.0"
-
-  name                = local.names.firewall
-  location            = local.location
-  resource_group_name = module.resource_group_connectivity.name
-  enable_telemetry    = local.enable_telemetry
-  tags                = local.tags
-
-  firewall_sku_name  = "AZFW_VNet"
-  firewall_sku_tier  = "Standard"
-  firewall_policy_id = module.firewall_policy.resource_id
-  firewall_zones     = ["1", "2", "3"]
-
-  ip_configurations = {
-    default = {
-      name                 = "ipconfig-default"
-      subnet_id            = module.hub_virtual_network.subnets["firewall"].resource_id
-      public_ip_address_id = module.firewall_public_ip.public_ip_id
-    }
-  }
-
-  diagnostic_settings = {
-    law = {
-      name                  = "diag-to-law"
-      workspace_resource_id = data.azurerm_log_analytics_workspace.platform.id
-    }
-  }
-
-  depends_on = [module.firewall_rules]
 }

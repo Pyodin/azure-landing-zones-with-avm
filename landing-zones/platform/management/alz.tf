@@ -28,15 +28,13 @@ module "alz" {
         }
       }
     }
-    # Only the zones connectivity deploys. The module grants the policy identity
-    # a role on each, so they must exist first: apply connectivity before this root.
     (local.management_group_ids.corp) = {
       policy_assignments = {
         Deploy-Private-DNS-Zones = {
+          creation_enabled = length(local.private_dns_zones) > 0
           parameters = {
-            azureKeyVaultPrivateDnsZoneId    = jsonencode({ value = "${local.private_dns_zone_id_prefix}/privatelink.vaultcore.azure.net" })
-            azureAcrPrivateDnsZoneId         = jsonencode({ value = "${local.private_dns_zone_id_prefix}/privatelink.azurecr.io" })
-            azureStorageBlobPrivateDnsZoneId = jsonencode({ value = "${local.private_dns_zone_id_prefix}/privatelink.blob.core.windows.net" })
+            for parameter, zone in local.private_dns_zones :
+            parameter => jsonencode({ value = "${local.private_dns_zone_id_prefix}/${zone}" })
           }
         }
       }

@@ -56,13 +56,21 @@ Removed in `lib/`, with what they would cost:
 | `Enable-DDoS-VNET` | No direct cost, but it expects a DDoS plan (~€2,500/month) and breaks VNet deployments without one |
 
 Kept and free or negligible: every `Deny`, `Audit` and `Enforce-GR-*` assignment,
-activity logs (free ingestion), service health alerts, private DNS.
+activity logs (free ingestion), service health alerts, private DNS when enabled.
 
-`Deploy-MDFC-Config-H224` is kept: its assignment sets every Defender plan to
-`Disabled`. Do not override its parameters: the underlying initiative defaults them all
-to enabled, and Defender plans bill per resource.
+`Deploy-MDFC-Config-H224` is kept, with every Defender plan `Disabled`. The library
+disables all but Defender for AI, which `alz.tf` disables. Any plan the assignment does
+not set falls back to the initiative default, which enables it, and Defender plans bill
+per resource: check new plans after a library upgrade.
 
 Before applying a library upgrade, check the plan for new `Deploy-*` assignments.
+
+## Expected plan warning
+
+`External role assignment creation required` on `Deploy-MCSB2-Monitoring` is a
+[known provider limitation](https://github.com/Azure/Azure-Landing-Zones/issues/1654). Both policies it
+names run as `AuditIfNotExists` in that initiative, so they never deploy and need no
+role. Left unsuppressed, so a real case after a library upgrade still shows.
 
 ## Common changes
 
@@ -84,10 +92,12 @@ the assignment name.
 
 `Deploy-Private-DNS-Zones` on `alz-corp` attaches every new private endpoint to the
 matching zone in the connectivity subscription, so workloads need no write access to
-the hub. Only the zones set in `alz.tf` are wired. To cover a new service, add its zone
-to connectivity's `private_dns_zones`, then its parameter here.
+the hub. Only the zones in `local.private_dns_zones` are wired, keyed by the policy's
+parameter name. Empty, the assignment is not created.
 
-The policy identity is granted a role on each zone, so connectivity is applied first.
+To cover a service, uncomment or add its zone in connectivity's `private_dns_zones` and
+apply it, then here. The policy identity is granted a role on each zone, so the zones
+must exist first.
 
 ## Further reading
 
