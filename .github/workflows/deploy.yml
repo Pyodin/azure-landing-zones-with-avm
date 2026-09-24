@@ -64,7 +64,7 @@ jobs:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/terraform
         with:
           zone: ${{ matrix.zone }}
@@ -92,7 +92,7 @@ jobs:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Replanned rather than carried over: a plan file can hold values Terraform would
       # otherwise mask, and an artifact on a public repository is readable by anyone.
       # TODO: apply the reviewed plan instead, as an encrypted artifact from the plan
