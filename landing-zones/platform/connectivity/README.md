@@ -22,11 +22,10 @@ Notes:
   endpoints through their own link to each private DNS zone.
 - **Bastion Developer** reaches VMs in the hub only: it does not cross peerings.
 - **VPN clients** cannot reach Azure DNS, so they resolve private endpoints through
-  the DNS forwarder, a cheap stand-in for a DNS Private Resolver (~€155/month). Add
-  the `dns_forwarder_ip` output to the downloaded VPN profile, under
-  `<clientconfig><dnsservers><dnsserver>`. The hub's own DNS setting is left alone:
-  the container would depend on itself. A single container with no SLA, and its IP
-  can change if Azure moves it: check the output after an outage.
+  the DNS forwarder, a cheap stand-in for a DNS Private Resolver (~€155/month). The
+  hub uses it as its DNS server, with Azure DNS as fallback, and the gateway hands
+  that to VPN clients. Its address is the subnet's first usable IP; a `check` warns
+  if the container got another one. A single container with no SLA.
 - **Private DNS** comes with a policy in `platform/management` that registers every new
   private endpoint in the matching zone. The policy is granted a role on each zone, so
   apply connectivity before management when turning it on.

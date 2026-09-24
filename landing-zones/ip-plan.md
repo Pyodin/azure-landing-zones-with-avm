@@ -21,7 +21,7 @@ Next spoke: the next free /16 (10.2.0.0/16). Also list it in connectivity
 | 10.0.0.64/26 | AzureFirewallManagementSubnet |
 | 10.0.2.0/27 | GatewaySubnet |
 | 10.0.3.0/27 | Management (jumpbox) |
-| 10.0.4.0/28 | DNS forwarder |
+| 10.0.4.0/28 | DNS forwarder, at 10.0.4.4 |
 
 ## Spoke subnets
 

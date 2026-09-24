@@ -19,7 +19,7 @@ output "vpn_client_address_space" {
 }
 
 output "dns_forwarder_ip" {
-  description = "DNS server for VPN clients, to add to the VPN client profile. Empty when deploy_dns_forwarder is false."
+  description = "Actual DNS forwarder address, which should equal the hub's DNS server. Empty when deploy_dns_forwarder is false."
   value       = try(module.dns_forwarder[0].ip_address, "")
 }
 

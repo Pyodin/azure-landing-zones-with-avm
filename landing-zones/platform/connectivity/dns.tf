@@ -23,10 +23,7 @@ module "dns_forwarder" {
       cpu      = 0.5
       memory   = 0.5
       commands = ["/usr/bin/coredns", "-conf", "/etc/coredns/Corefile"]
-      ports = [
-        { port = 53, protocol = "UDP" },
-        { port = 53, protocol = "TCP" },
-      ]
+      ports    = [{ port = 53, protocol = "UDP" }]
       volumes = {
         config = {
           name       = "config"
@@ -48,4 +45,11 @@ module "dns_forwarder" {
   }
 
   depends_on = [module.hub]
+}
+
+check "dns_forwarder_ip_matches_hub" {
+  assert {
+    condition     = !local.deploy_dns_forwarder || try(module.dns_forwarder[0].ip_address, local.dns_forwarder_ip) == local.dns_forwarder_ip
+    error_message = "The DNS forwarder did not get ${local.dns_forwarder_ip}, the hub's DNS server. Restart the container group, or point the hub at its actual address."
+  }
 }

@@ -85,6 +85,10 @@ module "hub" {
         mesh_peering_enabled             = false
         route_table_user_subnets_enabled = false
 
+        # Pushed to VPN clients. Azure DNS second: the hub, and the container pulling
+        # its own image, still resolve while the forwarder is down.
+        dns_servers = local.deploy_dns_forwarder ? [local.dns_forwarder_ip, "168.63.129.16"] : null
+
         subnets = {
           management = {
             name             = local.names.management_subnet

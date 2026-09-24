@@ -33,9 +33,10 @@ locals {
 
   vpn_client_address_space = "172.20.0.0/24"
 
-  # ~€0.43/zone/month. Empty: no zones and no DNS resource group. Linked to the hub;
-  # spokes link their own virtual network to each zone. Mirror the list in
-  # platform/management, and apply this root first.
+  # The first address Azure hands out in a subnet. Known before the container
+  # exists, so the hub can point at it; dns.tf checks the container got it.
+  dns_forwarder_ip = cidrhost(local.subnet_prefixes.dns_forwarder, 4)
+
   private_dns_zones = {
     # key_vault          = "privatelink.vaultcore.azure.net"
     # container_registry = "privatelink.azurecr.io"
