@@ -20,6 +20,7 @@ on:
           - platform/connectivity
           - platform/management
           - platform/subscriptions
+          - application/dev
       action:
         description: plan only, or plan and apply
         type: choice
@@ -43,7 +44,7 @@ jobs:
         # Apply order: with private DNS on, management grants roles on the hub's zones.
         run: |
           if [ "$SELECTED" = "all" ]; then
-            list='["platform/identity","platform/connectivity","platform/management","platform/subscriptions"]'
+            list='["platform/identity","platform/connectivity","platform/management","platform/subscriptions","application/dev"]'
           else
             list="[\"$SELECTED\"]"
           fi

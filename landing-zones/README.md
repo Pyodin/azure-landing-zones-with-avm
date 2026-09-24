@@ -11,6 +11,7 @@ Apply in this order. Each prints the values the next needs.
 | 2 | `platform/connectivity` | Hub network; optional firewall, VPN, Bastion and private DNS zones |
 | 3 | `platform/management` | Management groups, ALZ policy, Log Analytics |
 | 4 | `platform/subscriptions` | Budgets; application landing zones' management group, spoke network and hub peering |
+| 5 | `application/*` | One workload each, in the subscription and spoke vended above |
 
 With private DNS on, connectivity comes before management: the private DNS policy is
 granted a role on each zone, so the zones must exist first.

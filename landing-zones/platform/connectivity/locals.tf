@@ -18,6 +18,11 @@ locals {
   deploy_bastion       = false # Developer SKU is free; the jumpbox VM is ~€9/month
   deploy_dns_forwarder = true  # CoreDNS for VPN clients, ~€17/month
 
+  # Data plane access to the test vault, principal object IDs.
+  key_vault_secrets_officers = {
+    paul_bourhis = "da125852-ccf4-4346-9ac6-e952f20c2dfe"
+  }
+
   jumpbox_size = "Standard_B2ats_v2"
 
   hub_address_space    = "10.0.0.0/16"
@@ -29,6 +34,7 @@ locals {
     gateway             = "10.0.2.0/27"
     management          = "10.0.3.0/27"
     dns_forwarder       = "10.0.4.0/28"
+    private_endpoints   = "10.0.5.0/24"
   }
 
   vpn_client_address_space = "172.20.0.0/24"
@@ -38,13 +44,16 @@ locals {
   dns_forwarder_ip = cidrhost(local.subnet_prefixes.dns_forwarder, 4)
 
   private_dns_zones = {
-    # key_vault          = "privatelink.vaultcore.azure.net"
+    key_vault = "privatelink.vaultcore.azure.net"
     # container_registry = "privatelink.azurecr.io"
     # storage_blob       = "privatelink.blob.core.windows.net"
     # aks                = "privatelink.{regionName}.azmk8s.io"
   }
 
   suffix = "${local.environment}-${local.location_short}-${local.instance}"
+
+  # Globally unique names carry the subscription's first characters.
+  unique = substr(local.subscription_id, 0, 4)
 
   names = {
     resource_group_connectivity = "rg-connectivity-${local.suffix}"
@@ -64,6 +73,8 @@ locals {
     jumpbox_nic                 = "nic-jump-${local.suffix}"
     dns_forwarder               = "ci-dns-hub-${local.suffix}"
     dns_forwarder_subnet        = "snet-dns-${local.suffix}"
+    private_endpoint_subnet     = "snet-pep-${local.suffix}"
+    key_vault                   = "kv-hub-${local.environment}-${local.location_short}-${local.unique}"
   }
 
   tags = {

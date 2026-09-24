@@ -18,6 +18,7 @@ locals {
     "platform/identity",
     "platform/connectivity",
     "platform/subscriptions",
+    "application/dev",
   ]
 
   # Immutable subject form. Since July 2026 GitHub puts the owner and repository IDs

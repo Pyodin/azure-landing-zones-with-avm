@@ -34,6 +34,7 @@ jobs:
           - landing-zones/platform/identity
           - landing-zones/platform/connectivity
           - landing-zones/platform/subscriptions
+          - landing-zones/application/dev
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

@@ -10,7 +10,7 @@ locals {
   # Policy parameter => zone, for the zones platform/connectivity deploys. The policy
   # is granted a role on each, so they must exist first. Empty: no policy assignment.
   private_dns_zones = {
-    # azureKeyVaultPrivateDnsZoneId    = "privatelink.vaultcore.azure.net"
+    azureKeyVaultPrivateDnsZoneId = "privatelink.vaultcore.azure.net"
     # azureAcrPrivateDnsZoneId         = "privatelink.azurecr.io"
     # azureStorageBlobPrivateDnsZoneId = "privatelink.blob.core.windows.net"
   }

@@ -117,6 +117,13 @@ module "hub" {
             # The container group pulls its image from mcr.microsoft.com.
             default_outbound_access_enabled = true
           }
+          private_endpoints = {
+            name             = local.names.private_endpoint_subnet
+            address_prefixes = [local.subnet_prefixes.private_endpoints]
+            route_table = {
+              assign_generated_route_table = false
+            }
+          }
         }
       }
 
