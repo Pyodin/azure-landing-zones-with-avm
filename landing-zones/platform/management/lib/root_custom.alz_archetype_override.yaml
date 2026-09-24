@@ -1,0 +1,8 @@
+name: root_custom
+base_archetype: root
+policy_assignments_to_add:
+  - Enforce-Allowed-Locs
+policy_assignments_to_remove:
+  - Deploy-Diag-LogsCat
+  - Deploy-MDFC-OssDb
+  - Deploy-MDFC-SqlAtp

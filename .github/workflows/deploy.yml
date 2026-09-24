@@ -16,9 +16,10 @@ on:
         default: all
         options:
           - all
-          - platform/management
           - platform/identity
           - platform/connectivity
+          - platform/management
+          - platform/subscriptions
       action:
         description: plan only, or plan and apply
         type: choice
@@ -39,10 +40,10 @@ jobs:
       fail-fast: false
       matrix:
         zone:
-          - platform/management
           - platform/identity
           - platform/connectivity
-          # - application/workload-aks
+          - platform/management
+          - platform/subscriptions
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false
@@ -66,15 +67,16 @@ jobs:
     # Holds the run until a reviewer approves, and is the subject of the only
     # federated credential bound to the identity that can write.
     environment: production
+    # Matrix order is apply order: management grants roles on the hub's DNS zones.
     strategy:
       fail-fast: true
       max-parallel: 1
       matrix:
         zone:
-          - platform/management
           - platform/identity
           - platform/connectivity
-          # - application/workload-aks
+          - platform/management
+          - platform/subscriptions
     concurrency:
       group: tfstate-${{ matrix.zone }}
       cancel-in-progress: false

@@ -1,0 +1,4 @@
+name: connectivity_custom
+base_archetype: connectivity
+policy_assignments_to_remove:
+  - Enable-DDoS-VNET

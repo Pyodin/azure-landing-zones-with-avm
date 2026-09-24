@@ -33,7 +33,7 @@ jobs:
           - landing-zones/platform/management
           - landing-zones/platform/identity
           - landing-zones/platform/connectivity
-          - landing-zones/application/workload-aks
+          - landing-zones/platform/subscriptions
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

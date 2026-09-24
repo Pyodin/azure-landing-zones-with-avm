@@ -1,0 +1,4 @@
+name: identity_custom
+base_archetype: identity
+policy_assignments_to_remove:
+  - Deploy-VM-Backup
