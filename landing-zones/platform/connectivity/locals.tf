@@ -1,10 +1,9 @@
 locals {
   subscription_id = "1bc5bd17-f629-4778-9b62-4576f594cbb6"
 
-  # Outputs of platform/identity. This default is the Microsoft-owned Azure VPN
-  # Client, which lets any account connect. vpn.tf warns while it is still set.
+  # Outputs of platform/identity.
   identity = {
-    vpn_audience_client_id = "c632b3df-fb67-4d84-bdcf-b95ad541b5c8"
+    vpn_audience_client_id = "c5c5f83e-4fe8-413a-9995-4f01ca5bc179"
   }
 
   location       = "francecentral"
