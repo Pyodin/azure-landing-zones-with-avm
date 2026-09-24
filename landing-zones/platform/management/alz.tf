@@ -15,6 +15,7 @@ module "alz" {
     log_analytics_workspace_id = jsonencode({ value = local.log_analytics_workspace_id })
     resource_group_location    = jsonencode({ value = local.location })
     email_security_contact     = jsonencode({ value = local.security_contact_email })
+    allowed_locations          = jsonencode({ value = [local.location] })
   }
 
   policy_assignments_to_modify = {
@@ -24,11 +25,6 @@ module "alz" {
         Deploy-MDFC-Config-H224 = {
           parameters = {
             enableAscForAI = jsonencode({ value = "Disabled" })
-          }
-        }
-        Enforce-Allowed-Locs = {
-          parameters = {
-            listOfAllowedLocations = jsonencode({ value = [local.location] })
           }
         }
       }

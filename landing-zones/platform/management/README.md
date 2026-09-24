@@ -81,6 +81,7 @@ role. Left unsuppressed, so a real case after a library upgrade still shows.
 | Add your own assignment | Drop a `*.alz_policy_assignment.json` in `lib/` and add it to an override |
 | Audit instead of deny | `policy_assignments_to_modify` → `enforcement_mode = "DoNotEnforce"` |
 | Change a parameter | `policy_assignments_to_modify` → `parameters` |
+| Set one value across assignments | `policy_default_values`, names from the library's and `lib/`'s `alz_policy_default_values.json` |
 | Exclude a scope | `policy_assignments_to_modify` → `not_scopes` |
 | Exempt one resource | A [policy exemption](https://learn.microsoft.com/azure/governance/policy/concepts/exemption-structure), not managed here |
 | Upgrade the library | Bump `ref` in `providers.tf`, then read the plan |
