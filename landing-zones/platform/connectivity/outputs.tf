@@ -40,8 +40,3 @@ output "subscriptions_inputs" {
     has_vpn_gateway    = local.deploy_vpn
   }
 }
-
-output "key_vault_uri" {
-  description = "Test vault URI, resolvable to a private address over the VPN."
-  value       = try(module.key_vault[0].uri, "")
-}

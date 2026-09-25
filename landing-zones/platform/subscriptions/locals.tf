@@ -28,12 +28,6 @@ locals {
       subscription_id     = "a3dd6f19-8aca-4245-828f-968f9de0c43e"
       budget_amount       = 20
       management_group_id = "alz-corp"
-      spoke = {
-        address_space = "10.1.0.0/16"
-        subnet_prefixes = {
-          private_endpoints = "10.1.0.0/24"
-        }
-      }
     }
   }
 

@@ -29,12 +29,13 @@ locals {
 
   # Must match the ids in lib/alz_custom.alz_architecture_definition.yaml.
   management_group_ids = {
-    root         = "alz"
-    platform     = "alz-platform"
-    management   = "alz-management"
-    connectivity = "alz-connectivity"
-    corp         = "alz-corp"
-    online       = "alz-online"
+    root          = "alz"
+    platform      = "alz-platform"
+    management    = "alz-management"
+    connectivity  = "alz-connectivity"
+    landing_zones = "alz-landingzones"
+    corp          = "alz-corp"
+    online        = "alz-online"
   }
 
   suffix = "${local.environment}-${local.location_short}-${local.instance}"

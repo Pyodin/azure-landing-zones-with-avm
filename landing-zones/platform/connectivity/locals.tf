@@ -14,9 +14,9 @@ locals {
   enable_telemetry = false
 
   deploy_firewall      = false # Basic, ~€250/month
-  deploy_vpn           = true  # VpnGw1AZ, ~€130/month
+  deploy_vpn           = false  # VpnGw1AZ, ~€130/month
   deploy_bastion       = false # Developer SKU is free; the jumpbox VM is ~€9/month
-  deploy_dns_forwarder = true  # CoreDNS for VPN clients, ~€17/month
+  deploy_dns_forwarder = false  # CoreDNS for VPN clients, ~€17/month
 
   # Data plane access to the test vault, principal object IDs.
   key_vault_secrets_officers = {
@@ -44,7 +44,9 @@ locals {
   dns_forwarder_ip = cidrhost(local.subnet_prefixes.dns_forwarder, 4)
 
   private_dns_zones = {
-    key_vault = "privatelink.vaultcore.azure.net"
+    key_vault     = "privatelink.vaultcore.azure.net"
+    postgresql    = "privatelink.postgres.database.azure.com"
+    container_app = "privatelink.${local.location}.azurecontainerapps.io"
     # container_registry = "privatelink.azurecr.io"
     # storage_blob       = "privatelink.blob.core.windows.net"
     # aks                = "privatelink.{regionName}.azmk8s.io"
