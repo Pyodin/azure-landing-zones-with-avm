@@ -30,6 +30,7 @@ locals {
   # Must match the ids in lib/alz_custom.alz_architecture_definition.yaml.
   management_group_ids = {
     root         = "alz"
+    platform     = "alz-platform"
     management   = "alz-management"
     connectivity = "alz-connectivity"
     corp         = "alz-corp"

@@ -29,6 +29,15 @@ module "alz" {
         }
       }
     }
+    (local.management_group_ids.platform) = {
+      policy_assignments = {
+        Enforce-GR-KeyVault = {
+          parameters = {
+            effectKvPurgeProtection = jsonencode({ value = "Audit" })
+          }
+        }
+      }
+    }
     (local.management_group_ids.corp) = {
       policy_assignments = {
         Deploy-Private-DNS-Zones = {
